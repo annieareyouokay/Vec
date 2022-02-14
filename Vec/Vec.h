@@ -21,8 +21,8 @@ public:
 	Vec& operator=(const Vec&);
 
 	size_type size() const { return avail - data; }
-	reference operator[](size_type i) { return data[i]; }
-	const_reference operator[](size_type i) const { return data[i]; }
+	T& operator[](size_type i) { return data[i]; }
+	const T& operator[](size_type i) const { return data[i]; }
 	iterator begin() { return data; }
 	const_iterator begin() const { return data; }
 	iterator end() { return avail; }
@@ -59,7 +59,7 @@ template<class T>
 Vec<T>& Vec<T>::operator=(const Vec& rhs) {
 	if (&rhs != this)
 	{
-		//clear array on the left side
+		//clear array on the left hand side
 		uncreate();
 		//copy rhs to lhs
 		create(rhs.begin(), rhs.end());
@@ -83,4 +83,42 @@ template<class T>
 void Vec<T>::create(const_iterator b, const_iterator e) {
 	data = alloc.allocate(e - b);
 	limit = avail = std::uninitialized_copy(b, e, data);
+}
+
+template<class T>
+void Vec<T>::uncreate() {
+	if (data)
+	{
+		iterator it = avail;
+		while (avail != data)
+		{
+			alloc.destroy(--it);
+		}
+		alloc.deallocate(data, limit - data);
+	}
+	data = avail = limit = 0;
+}
+
+template<class T> 
+void Vec<T>::grow() {
+	//calculate new size
+	size_type new_size = max(2 * (limit - data), ptrdiff_t(1));
+
+	//reserve more memory and copy existing objects to it
+	iterator new_data = alloc.allocate(new_size);
+	iterator new_avail = std::uninitialized_copy(data, avail, new_data);
+
+	//release old memory 
+	uncreate();
+
+	//set new memory area
+	data = new_avail;
+	avail = new_avail;
+	limit = data + new_size;
+}
+
+template<class T>
+void Vec<T>::unchecked_append(const_reference val) {
+	//create new object next to last created
+	alloc.construct(avail++, val);
 }
