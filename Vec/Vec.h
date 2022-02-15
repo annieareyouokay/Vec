@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
+#include <math.h>
 
 template<class T> class Vec
 {
@@ -28,12 +30,13 @@ public:
 	iterator end() { return avail; }
 	const_iterator end() const { return avail; }
 	void push_back(const T& val) {
-		if (avail = limit)
-		{
+		if (avail == limit)
 			grow();
-		}
 		unchecked_append(val);
 	}
+
+	T* erase(iterator);
+	void clear();
 
 private:
 	//class realization
@@ -90,7 +93,7 @@ void Vec<T>::uncreate() {
 	if (data)
 	{
 		iterator it = avail;
-		while (avail != data)
+		while (it >= data)
 		{
 			alloc.destroy(--it);
 		}
@@ -102,7 +105,7 @@ void Vec<T>::uncreate() {
 template<class T> 
 void Vec<T>::grow() {
 	//calculate new size
-	size_type new_size = max(2 * (limit - data), ptrdiff_t(1));
+	size_type new_size = std::max(2 * (limit - data), ptrdiff_t(1));
 
 	//reserve more memory and copy existing objects to it
 	iterator new_data = alloc.allocate(new_size);
@@ -112,7 +115,7 @@ void Vec<T>::grow() {
 	uncreate();
 
 	//set new memory area
-	data = new_avail;
+	data = new_data;
 	avail = new_avail;
 	limit = data + new_size;
 }
@@ -121,4 +124,24 @@ template<class T>
 void Vec<T>::unchecked_append(const_reference val) {
 	//create new object next to last created
 	alloc.construct(avail++, val);
+}
+
+template<class T>
+T* Vec<T>::erase(iterator it) {
+	iterator ret = it;
+	if (it >= data || it < avail)
+	{		
+		while (it < avail)
+		{
+			T* p_it = it++;
+			*p_it = *it;
+		}
+		avail = --it;
+	}
+	return ret;
+}
+
+template<class T>
+void Vec<T>::clear() {
+	uncreate();
 }
