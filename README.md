@@ -1,2 +1,2 @@
 # Vec
-custom vecor realication on CPP
+simple custom vecor realication on CPP
