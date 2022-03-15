@@ -1,9 +1,10 @@
 #pragma once
 
 #include <memory>
-#include <math.h>
+#include <cmath>
+#include<algorithm>
 
-template<class T> class Vec
+template<typename T> class DynamicArray
 {
 public:
 	//class interface
@@ -14,12 +15,27 @@ public:
 	typedef T& reference;
 	typedef const T& const_reference;
 
-	//constructor, destructor, copy, assignment
-	Vec() { create(); }
-	~Vec() { uncreate(); }
-	Vec(const Vec& v) { create(v.begin(), v.end());	}
-	explicit Vec(size_type n, const T& val = T()) { create(n, val); }
-	Vec& operator=(const Vec&);
+	//constructor, destructor
+	DynamicArray(): data(0), limit(0), avail(0) {}
+	~DynamicArray() { clear(); }
+	explicit DynamicArray(size_type n, const T& val = T()) { create(n, val); }
+	//copy ctor 
+	DynamicArray(const DynamicArray& v) { create(v.begin(), v.end()); }
+	//copy assignment
+	DynamicArray& operator=(const DynamicArray&);
+	//move ctor
+	DynamicArray(DynamicArray&& rval)
+	: data(std::exchange(rval.data, nullptr)), limit(std::exchange(rval.limit, nullptr)), avail(std::exchange(rval.avail, nullptr))
+	{ std::cout << "move constr" << std::endl; }
+	//move assignment 
+	DynamicArray& operator=(DynamicArray&& rval) {
+		std::cout << "move assignment" << std::endl;
+		std::swap(data, rval.data);
+		std::swap(limit, rval.limit);
+		std::swap(avail, rval.avail);
+
+		return *this;
+	}
 
 	size_type size() const { return avail - data; }
 	T& operator[](size_type i) { return data[i]; }
@@ -35,7 +51,6 @@ public:
 	}
 
 	T* erase(iterator);
-	void clear();
 
 private:
 	//class realization
@@ -45,12 +60,11 @@ private:
 	std::allocator<T> alloc;
 
 	//functions for placing array in memory and initializing it
-	void create();
 	void create(size_type, const_reference);
 	void create(const_iterator, const_iterator);
 
 	//functions for destroying objects and releasing memory
-	void uncreate();
+	void clear();
 
 	//push_back functions
 	void grow();
@@ -58,37 +72,32 @@ private:
 };
 
 template<class T>
-Vec<T>& Vec<T>::operator=(const Vec& rhs) {
+DynamicArray<T>& DynamicArray<T>::operator=(const DynamicArray& rhs) {
 	if (&rhs != this)
 	{
 		//clear array on the left hand side
-		uncreate();
+		clear();
 		//copy rhs to lhs
 		create(rhs.begin(), rhs.end());
 	}
 	return *this;
 }
 
-template<class T>
-void Vec<T>::create() {
-	data = avail = limit = 0;
-}
-
 template<class T> 
-void Vec<T>::create(size_type n, const_reference val) {
+void DynamicArray<T>::create(size_type n, const_reference val) {
 	data = alloc.allocate(n);
 	limit = avail = data + n;
 	std::uninitialized_fill(data, limit, val);
 }
 
 template<class T>
-void Vec<T>::create(const_iterator b, const_iterator e) {
+void DynamicArray<T>::create(const_iterator b, const_iterator e) {
 	data = alloc.allocate(e - b);
 	limit = avail = std::uninitialized_copy(b, e, data);
 }
 
 template<class T>
-void Vec<T>::uncreate() {
+void DynamicArray<T>::clear() {
 	if (data)
 	{
 		iterator it = avail;
@@ -102,7 +111,7 @@ void Vec<T>::uncreate() {
 }
 
 template<class T> 
-void Vec<T>::grow() {
+void DynamicArray<T>::grow() {
 	//calculate new size
 	size_type new_size = std::max(2 * (limit - data), ptrdiff_t(1));
 
@@ -111,7 +120,7 @@ void Vec<T>::grow() {
 	iterator new_avail = std::uninitialized_copy(data, avail, new_data);
 
 	//release old memory 
-	uncreate();
+	clear();
 
 	//set new memory area
 	data = new_data;
@@ -120,13 +129,13 @@ void Vec<T>::grow() {
 }
 
 template<class T>
-void Vec<T>::unchecked_append(const_reference val) {
+void DynamicArray<T>::unchecked_append(const_reference val) {
 	//create new object next to last created
 	alloc.construct(avail++, val);
 }
 
 template<class T>
-T* Vec<T>::erase(iterator it) {
+T* DynamicArray<T>::erase(iterator it) {
 	iterator ret = it;
 	if (it >= data || it < avail)
 	{		
@@ -138,9 +147,4 @@ T* Vec<T>::erase(iterator it) {
 		avail = --it;
 	}
 	return ret;
-}
-
-template<class T>
-void Vec<T>::clear() {
-	uncreate();
 }
