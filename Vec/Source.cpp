@@ -19,6 +19,8 @@ int main()
 	
 //	arr2 = func(DynamicArray<int>());
 	arr2 = std::move(arr);
-	std::cout << arr2.size();
+	std::cout << arr2.size() << std::endl;
+	DynamicArray<int>::size_type i = 5;
+	std::cout << arr2[i] << std::endl;
 	return 0;
 }

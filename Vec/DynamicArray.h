@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <memory>
 #include <cmath>
 #include<algorithm>
@@ -8,12 +9,12 @@ template<typename T> class DynamicArray
 {
 public:
 	//class interface
-	typedef T* iterator;
-	typedef const T* const_iterator;
-	typedef T value_type;
-	typedef size_t size_type;
-	typedef T& reference;
-	typedef const T& const_reference;
+	using iterator = T*;
+	using const_iterator = const T*;
+	using value_type = T;
+	using size_type = size_t;
+	using reference = T&; 
+	using const_reference = const T&;
 
 	//constructor, destructor
 	DynamicArray(): data(0), limit(0), avail(0) {}
@@ -36,8 +37,19 @@ public:
 	}
 
 	size_type size() const { return avail - data; }
-	T& operator[](size_type i) { return data[i]; }
-	const T& operator[](size_type i) const { return data[i]; }
+	
+	T& operator[](size_type i) { 
+		size_type max_ = data - avail;
+		assert(i < max_);
+		return data[i];		 
+	}
+
+	const T& operator[](size_type i) const {
+		size_type max_ = data - avail;
+		assert(i < max_);
+		return data[i];	
+	}
+
 	iterator begin() { return data; }
 	const_iterator begin() const { return data; }
 	iterator end() { return avail; }
@@ -55,6 +67,8 @@ private:
 	iterator data; //first element of array
 	iterator limit; //element next for the last available element of array
 	iterator avail; //element next for tha last created element of array
+	size_type size_;
+	size_type capacity_;
 	std::allocator<T> alloc;
 
 	//functions for placing array in memory and initializing it
