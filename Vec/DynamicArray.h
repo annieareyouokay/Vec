@@ -25,11 +25,9 @@ public:
 	DynamicArray& operator=(const DynamicArray&);
 	//move ctor
 	DynamicArray(DynamicArray&& rval)
-	: data(std::exchange(rval.data, nullptr)), limit(std::exchange(rval.limit, nullptr)), avail(std::exchange(rval.avail, nullptr))
-	{ std::cout << "move constr" << std::endl; }
+	: data(std::exchange(rval.data, nullptr)), limit(std::exchange(rval.limit, nullptr)), avail(std::exchange(rval.avail, nullptr)) {}
 	//move assignment 
 	DynamicArray& operator=(DynamicArray&& rval) {
-		std::cout << "move assignment" << std::endl;
 		std::swap(data, rval.data);
 		std::swap(limit, rval.limit);
 		std::swap(avail, rval.avail);
